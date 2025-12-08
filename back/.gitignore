@@ -1,0 +1,7 @@
+.env
+node_modules
+package-lock.json
+database.db
+data.json
+ssl/cert.pem
+ssl/key.pem
