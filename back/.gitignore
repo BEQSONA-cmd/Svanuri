@@ -2,6 +2,7 @@
 node_modules
 package-lock.json
 database.db
-data.json
+en-ge.json
+ge-en.json
 ssl/cert.pem
 ssl/key.pem
