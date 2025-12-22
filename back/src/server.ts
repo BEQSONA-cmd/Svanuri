@@ -1,7 +1,5 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import registerRoutes from "./api/register";
-import userRoutes from "./api/user";
 import translateRoutes from "./api/translate";
 import dotenv from "dotenv";
 
@@ -18,8 +16,6 @@ fastify.register(cors, {
     credentials: true,
 });
 
-fastify.register(registerRoutes);
-fastify.register(userRoutes);
 fastify.register(translateRoutes);
 
 

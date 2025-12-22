@@ -1,65 +1,32 @@
 import { FastifyInstance } from "fastify";
-import fs from "fs";
-import path from "path";
-
-const ge_en = path.join(__dirname, "../../ge-en.json");
-const en_ge = path.join(__dirname, "../../en-ge.json");
-
-const dictionary_ge_en = JSON.parse(fs.readFileSync(ge_en, "utf8"));
-const dictionary_en_ge = JSON.parse(fs.readFileSync(en_ge, "utf8"));
-
+import { addTranslation, findWords, translate } from "./utils";
 export default async function translateRoutes(fastify: FastifyInstance) {
+
+    fastify.get("/api/find-words", async (req, res) => {
+        const { text, from } = req.query as { text: string; from: string };
+        const result = await findWords(from, text);
+        return res.send({ words: result });
+    });
+
+
     fastify.post("/api/translate", async (req, res) => {
-        try {
-            const { text, from, to } = req.body as {
-                text: string;
-                from: string;
-                to: string;
-            };
+        const { text, from, to } = req.body as {
+            text: string;
+            from: string;
+            to: string;
+        };
+        const result = await translate(from, to, text);
+        return res.send(result);
+    });
 
-            const translated = translateText(text.toLowerCase(), from, to);
-
-            return res.send({ translatedText: translated });
-        } catch (error) {
-            console.error(error);
-            return res.code(500).send({ message: "Internal Server Error" });
-        }
+    fastify.post("/api/add-translation", async (req, res) => {
+        const { index, translation, to } = req.body as {
+            index: number;
+            translation: string;
+            to: string;
+        };
+        await addTranslation(to, index, translation);
+        return res.send({ success: true });
     });
 }
 
-function translateText(text: string, from: string, to: string): string {
-    const words = text.split(/\s+/);
-
-    const translatedWords: string[] = [];
-    let dictionary: { [key: string]: string } = {};
-    console.log(from, to);
-    if (from === "Georgian" && to === "English") {
-        dictionary = dictionary_ge_en;
-    } else if (from === "English" && to === "Georgian") {
-        dictionary = dictionary_en_ge;
-    } else {
-        return text;
-    }
-
-
-    for (let i = 0; i < words.length; i++) {
-        let foundPhrase = false;
-
-        for (let len = 3; len >= 1; len--) {
-            const slice = words.slice(i, i + len).join(" ");
-
-            if (dictionary[slice]) {
-                translatedWords.push(dictionary[slice]);
-                i += len - 1;
-                foundPhrase = true;
-                break;
-            }
-        }
-
-        if (!foundPhrase) {
-            translatedWords.push(words[i]);
-        }
-    }
-
-    return translatedWords.join(" ");
-}

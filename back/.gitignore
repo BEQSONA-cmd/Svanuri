@@ -4,5 +4,6 @@ package-lock.json
 database.db
 en-ge.json
 ge-en.json
+src/data/
 ssl/cert.pem
 ssl/key.pem

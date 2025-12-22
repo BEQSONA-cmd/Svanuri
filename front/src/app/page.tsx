@@ -4,27 +4,23 @@ import { Input, Output } from "@/components/placeholders";
 import { useState, useEffect } from "react";
 import { FaDeleteLeft } from "react-icons/fa6";
 import { toast } from "react-toastify";
-import axios from "axios";
-
-const HOST = process.env.NEXT_PUBLIC_HOST;
+import { addTranslation, getTranslated } from "./api";
 
 const TranslateLanguages = {
-    ge: "Georgian",
-    en: "English",
+    ge: "ge",
+    en: "en",
 };
 
-async function getTranslated(input: string, from: string, to: string) {
-    try {
-        const response = await axios.post(
-            `${HOST}/api/translate`,
-            { text: input, from, to },
-            { headers: { "Content-Type": "application/json" } }
-        );
-        return response.data.translatedText;
-    } catch (error) {
-        toast.error("Translation failed. Please try again.");
-        return "";
-    }
+export enum TranslateStatus {
+    Success = 0,
+    Missing = 1,
+    NotFound = 2
+}
+
+interface TranslateResult {
+    translatedText: string;
+    status: TranslateStatus;
+    index?: number;
 }
 
 export default function Home() {
@@ -40,12 +36,23 @@ export default function Home() {
         }
 
         const timeout = setTimeout(async () => {
-            const translatedText = await getTranslated(
-                input,
-                inputLanguage,
-                outputLanguage
-            );
-            setTranslated(translatedText);
+            const result: TranslateResult = await getTranslated(input, inputLanguage, outputLanguage);
+
+            if (result.status === TranslateStatus.Missing) {
+                const userTranslation = prompt(
+                    `No translation found for "${input}". Add one?`
+                );
+
+                if (userTranslation && result.index !== undefined) {
+                    await addTranslation(
+                        result.index,
+                        userTranslation,
+                        outputLanguage
+                    );
+                }
+            } else {
+                setTranslated(result.translatedText);
+            }
         }, 1000);
 
         return () => clearTimeout(timeout);
@@ -98,7 +105,11 @@ export default function Home() {
                             </button>
                         </div>
 
-                        <Input input={input} handleChange={handleChange} handleClear={handleClear} />
+                        <Input
+                            input={input}
+                            handleChange={handleChange}
+                            handleClear={handleClear}
+                        />
                     </div>
 
                     <div className="space-y-2">
