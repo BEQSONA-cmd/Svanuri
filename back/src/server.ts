@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import translateRoutes from "./api/translate";
+import translateRoutes from "./api/translateRoutes";
 import dotenv from "dotenv";
 
 dotenv.config();
